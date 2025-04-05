@@ -468,7 +468,7 @@ export default function ConsumerPage() {
                       <SelectTrigger className="bg-white/10 text-white relative z-[10001]">
                         <SelectValue placeholder="Select business" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white/10 text-white absolute z-[10002]">
+                      <SelectContent className="bg-white/100 text-white absolute z-[10002]">
                         {businesses.map((business) => (
                           <SelectItem key={business.name} value={business.name}>
                             {business.name}
@@ -531,7 +531,7 @@ export default function ConsumerPage() {
                       <SelectTrigger className="bg-white/10 text-white relative z-[10001]">
                         <SelectValue placeholder="Select a charity" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white/10 text-white absolute z-[10002]">
+                      <SelectContent className="bg-white/100 text-white absolute z-[10002]">
                         {charities.map((charity) => (
                           <SelectItem key={charity.id} value={charity.id}>
                             {charity.name}
@@ -604,7 +604,7 @@ export default function ConsumerPage() {
                       <SelectTrigger className="bg-white/10 text-white relative z-[10001]">
                         <SelectValue placeholder="Select coin to swap from" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white/10 text-white absolute z-[10002]">
+                      <SelectContent className="bg-white/100 text-white absolute z-[10002]">
                         {businesses.map((business) => (
                           <SelectItem key={business.name} value={business.name}>
                             {business.name} Coin
@@ -637,7 +637,7 @@ export default function ConsumerPage() {
                       <SelectTrigger className="bg-white/10 text-white relative z-[10001]">
                         <SelectValue placeholder="Select coin to swap to" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white/10 text-white absolute z-[10002]">
+                      <SelectContent className="bg-white/100 text-white absolute z-[10002]">
                         {businesses.map((business) => (
                           <SelectItem key={business.name} value={business.name}>
                             {business.name} Coin
@@ -711,7 +711,7 @@ export default function ConsumerPage() {
                       <SelectTrigger className="bg-white/10 text-white relative z-[10001]">
                         <SelectValue placeholder="Select business" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white/10 text-white absolute z-[10002]">
+                      <SelectContent className="bg-white/100 text-white absolute z-[10002]">
                         {businesses.map((business) => (
                           <SelectItem key={business.name} value={business.name}>
                             {business.name}
@@ -788,7 +788,7 @@ export default function ConsumerPage() {
                       <SelectTrigger className="bg-white/10 text-white relative z-[10001]">
                         <SelectValue placeholder="Select donation request" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white/10 text-white absolute z-[10002] w-80" style={{ zIndex: 10002 }}>
+                      <SelectContent className="bg-white/100 text-white absolute z-[10002] w-80" style={{ zIndex: 10002 }}>
                         {donationRequests.map((request) => (
                           <SelectItem key={request.id} value={request.id}>
                             {request.business} - {request.amount} points requested
