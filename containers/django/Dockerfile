@@ -15,7 +15,7 @@ RUN chmod +x /etc/s6-overlay/s6-rc.d/daphne/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run
 
 WORKDIR /app
-ADD ../../srcs/backend/transa /app
+ADD ../../srcs/backend/soltyback /app
 
 COPY containers/django/entrypoint.sh /tmp/entrypoint.sh
 
