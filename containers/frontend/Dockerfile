@@ -52,9 +52,9 @@ WORKDIR /app
 # Copy all built files from builder stage
 COPY --from=builder /app .
 
-# Remove development dependencies
-RUN npm install -g pnpm
-RUN pnpm install --prod
+# Install production dependencies
+RUN npm install -g pnpm && \
+    pnpm install --prod
 
 # Set environment variables
 ENV NODE_ENV=production

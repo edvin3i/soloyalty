@@ -112,6 +112,14 @@ const spendingOptions = [
   }
 ]
 
+const charities = [
+  { id: "red-cross", name: "Red Cross", description: "Humanitarian aid and emergency response" },
+  { id: "wwf", name: "WWF", description: "Wildlife conservation and environmental protection" },
+  { id: "unicef", name: "UNICEF", description: "Children's rights and welfare" },
+  { id: "oxfam", name: "Oxfam", description: "Poverty alleviation and social justice" },
+  { id: "msf", name: "Médecins Sans Frontières", description: "Medical assistance in crisis zones" }
+]
+
 export default function ConsumerPage() {
   const [totalPoints, setTotalPoints] = useState(7950)
   const [claimingCode, setClaimingCode] = useState(false)
@@ -119,9 +127,23 @@ export default function ConsumerPage() {
   const [selectedBusiness, setSelectedBusiness] = useState("")
   const [donating, setDonating] = useState(false)
   const [swapping, setSwapping] = useState(false)
-  const [donationAmount, setDonationAmount] = useState("")
   const [fromCoin, setFromCoin] = useState("")
   const [toCoin, setToCoin] = useState("")
+  const [fromAmount, setFromAmount] = useState("")
+  const [toAmount, setToAmount] = useState("")
+
+  const conversionRate = 0.7
+
+  useEffect(() => {
+    if (fromAmount) {
+      const amount = parseFloat(fromAmount)
+      if (!isNaN(amount)) {
+        setToAmount((amount * conversionRate).toFixed(2))
+      }
+    } else {
+      setToAmount("")
+    }
+  }, [fromAmount])
 
   const handleClaimPoints = (points: number, offerName: string) => {
     setTotalPoints(totalPoints + points)
@@ -206,37 +228,64 @@ export default function ConsumerPage() {
       return
     }
 
-    setTotalPoints(totalPoints - amount)
-    toast.success(
-      <div className="flex items-center gap-2">
-        <CheckCircle2 className="h-4 w-4 text-green-500" />
-        <span>Donated {amount} SLC to charity</span>
-      </div>
-    )
-    setDonating(false)
-    setDonationAmount("")
-  }
-
-  const handleSwapCoins = () => {
-    if (fromCoin === toCoin) {
+    if (!selectedCharity) {
       toast.error(
         <div className="flex items-center gap-2">
           <AlertCircle className="h-4 w-4 text-red-500" />
-          <span>Please select different coins to swap</span>
+          <span>Please select a charity</span>
         </div>
       )
       return
     }
 
+    setTotalPoints(totalPoints - amount)
     toast.success(
       <div className="flex items-center gap-2">
         <CheckCircle2 className="h-4 w-4 text-green-500" />
-        <span>Swapped coins successfully</span>
+        <span>Donated {amount} SLC to {charities.find(c => c.id === selectedCharity)?.name}</span>
+      </div>
+    )
+    setDonating(false)
+    setDonationAmount("")
+    setSelectedCharity("")
+  }
+
+  const handleSwapCoins = () => {
+    const fromAmountValue = parseFloat(fromAmount)
+    const toAmountValue = parseFloat(toAmount)
+    
+    if (isNaN(fromAmountValue) || fromAmountValue <= 0) {
+      toast.error(
+        <div className="flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 text-red-500" />
+          <span>Please enter a valid amount</span>
+        </div>
+      )
+      return
+    }
+
+    if (!fromCoin || !toCoin) {
+      toast.error(
+        <div className="flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 text-red-500" />
+          <span>Please select both coins</span>
+        </div>
+      )
+      return
+    }
+
+    // Here you would typically make an API call to perform the swap
+    toast.success(
+      <div className="flex items-center gap-2">
+        <CheckCircle2 className="h-4 w-4 text-green-500" />
+        <span>Swapped {fromAmountValue} {fromCoin} to {toAmountValue} {toCoin}</span>
       </div>
     )
     setSwapping(false)
     setFromCoin("")
     setToCoin("")
+    setFromAmount("")
+    setToAmount("")
   }
 
   return (
@@ -351,9 +400,29 @@ export default function ConsumerPage() {
               <h2 className="text-xl font-bold text-white mb-4">Donate to Charity</h2>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="donationAmount" className="text-white/80">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="charity">
+                    Select Charity
+                  </label>
+                  <Select
+                    value={selectedCharity}
+                    onValueChange={setSelectedCharity}
+                  >
+                    <SelectTrigger className="bg-white/10 text-white">
+                      <SelectValue placeholder="Select a charity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {charities.map((charity) => (
+                        <SelectItem key={charity.id} value={charity.id}>
+                          {charity.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="donationAmount">
                     Enter Donation Amount
-                  </Label>
+                  </label>
                   <Input
                     id="donationAmount"
                     type="number"
@@ -368,6 +437,7 @@ export default function ConsumerPage() {
                     onClick={() => {
                       setDonating(false)
                       setDonationAmount("")
+                      setSelectedCharity("")
                     }}
                     className="bg-white/10 text-white hover:bg-white/20"
                   >
@@ -376,6 +446,7 @@ export default function ConsumerPage() {
                   <Button
                     onClick={handleDonate}
                     className="bg-white text-purple-900 hover:bg-white/90"
+                    disabled={!selectedCharity}
                   >
                     Donate
                   </Button>
@@ -387,14 +458,14 @@ export default function ConsumerPage() {
 
         {/* Coin Swap Modal */}
         {swapping && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
             <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-white/20">
               <h2 className="text-xl font-bold text-white mb-4">Swap Coins</h2>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="fromCoin" className="text-white/80">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="fromCoin">
                     From Coin
-                  </Label>
+                  </label>
                   <Select
                     value={fromCoin}
                     onValueChange={setFromCoin}
@@ -412,9 +483,22 @@ export default function ConsumerPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="toCoin" className="text-white/80">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="fromAmount">
+                    Amount
+                  </label>
+                  <Input
+                    id="fromAmount"
+                    type="number"
+                    value={fromAmount}
+                    onChange={(e) => setFromAmount(e.target.value)}
+                    className="bg-white/10 text-white"
+                    placeholder="Enter amount"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="toCoin">
                     To Coin
-                  </Label>
+                  </label>
                   <Select
                     value={toCoin}
                     onValueChange={setToCoin}
@@ -431,6 +515,19 @@ export default function ConsumerPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="toAmount">
+                    Amount
+                  </label>
+                  <Input
+                    id="toAmount"
+                    type="number"
+                    value={toAmount}
+                    readOnly
+                    className="bg-white/10 text-white cursor-not-allowed"
+                    placeholder="Calculated amount"
+                  />
+                </div>
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"
@@ -438,6 +535,8 @@ export default function ConsumerPage() {
                       setSwapping(false)
                       setFromCoin("")
                       setToCoin("")
+                      setFromAmount("")
+                      setToAmount("")
                     }}
                     className="bg-white/10 text-white hover:bg-white/20"
                   >
@@ -446,6 +545,7 @@ export default function ConsumerPage() {
                   <Button
                     onClick={handleSwapCoins}
                     className="bg-white text-purple-900 hover:bg-white/90"
+                    disabled={!fromCoin || !toCoin || !fromAmount}
                   >
                     Swap
                   </Button>
