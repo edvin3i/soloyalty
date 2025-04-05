@@ -120,17 +120,30 @@ const charities = [
   { id: "msf", name: "Médecins Sans Frontières", description: "Medical assistance in crisis zones" }
 ]
 
+const donationRequests = [
+  { id: 1, business: "Air France", amount: 1000 },
+  { id: 2, business: "Starbucks", amount: 500 },
+  { id: 3, business: "Lidl", amount: 2000 },
+  { id: 4, business: "Pathe Cinema", amount: 1500 },
+  { id: 5, business: "Zara", amount: 2500 },
+]
+
 export default function ConsumerPage() {
   const [totalPoints, setTotalPoints] = useState(7950)
   const [claimingCode, setClaimingCode] = useState(false)
   const [promoCode, setPromoCode] = useState("")
   const [selectedBusiness, setSelectedBusiness] = useState("")
   const [donating, setDonating] = useState(false)
+  const [selectedCharity, setSelectedCharity] = useState("")
   const [swapping, setSwapping] = useState(false)
   const [fromCoin, setFromCoin] = useState("")
   const [toCoin, setToCoin] = useState("")
   const [fromAmount, setFromAmount] = useState("")
   const [toAmount, setToAmount] = useState("")
+  const [donationAmount, setDonationAmount] = useState("")
+  const [requestingPoints, setRequestingPoints] = useState(false);
+  const [requestAmount, setRequestAmount] = useState("");
+  const [selectedDonationRequest, setSelectedDonationRequest] = useState(null);
 
   const conversionRate = 0.7
 
@@ -206,49 +219,69 @@ export default function ConsumerPage() {
     }
   }
 
-  const handleDonate = () => {
-    const amount = parseInt(donationAmount)
-    if (isNaN(amount) || amount <= 0) {
-      toast.error(
-        <div className="flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 text-red-500" />
-          <span>Please enter a valid donation amount</span>
-        </div>
-      )
-      return
-    }
+  const handleDonate = async () => {
+    try {
+      if (!selectedDonationRequest || !donationAmount) {
+        toast.error("Please select a donation request and enter an amount");
+        return;
+      }
 
-    if (amount > totalPoints) {
-      toast.error(
-        <div className="flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 text-red-500" />
-          <span>Insufficient points. You need {amount - totalPoints} more SLC</span>
-        </div>
-      )
-      return
-    }
+      const response = await fetch('/api/points/donate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          requestId: selectedDonationRequest.id,
+          amount: parseFloat(donationAmount),
+        }),
+      });
 
-    if (!selectedCharity) {
-      toast.error(
-        <div className="flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 text-red-500" />
-          <span>Please select a charity</span>
-        </div>
-      )
-      return
+      if (response.ok) {
+        toast.success(`Successfully donated ${donationAmount} points`);
+        setDonating(false);
+        setSelectedDonationRequest(null);
+        setDonationAmount("");
+      } else {
+        toast.error("Failed to donate points");
+      }
+    } catch (error) {
+      toast.error("Error donating points");
+      console.error(error);
     }
+  };
 
-    setTotalPoints(totalPoints - amount)
-    toast.success(
-      <div className="flex items-center gap-2">
-        <CheckCircle2 className="h-4 w-4 text-green-500" />
-        <span>Donated {amount} SLC to {charities.find(c => c.id === selectedCharity)?.name}</span>
-      </div>
-    )
-    setDonating(false)
-    setDonationAmount("")
-    setSelectedCharity("")
-  }
+  const handleRequestPoints = async () => {
+    try {
+      if (!selectedBusiness || !requestAmount) {
+        toast.error("Please select a business and enter an amount");
+        return;
+      }
+
+      const response = await fetch('/api/points/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          business: selectedBusiness,
+          amount: parseFloat(requestAmount),
+        }),
+      });
+
+      if (response.ok) {
+        toast.success(`Successfully requested ${requestAmount} points from ${selectedBusiness}`);
+        setRequestingPoints(false);
+        setSelectedBusiness("");
+        setRequestAmount("");
+      } else {
+        toast.error("Failed to request points");
+      }
+    } catch (error) {
+      toast.error("Error requesting points");
+      console.error(error);
+    }
+  };
 
   const handleSwapCoins = () => {
     const fromAmountValue = parseFloat(fromAmount)
@@ -260,8 +293,8 @@ export default function ConsumerPage() {
           <AlertCircle className="h-4 w-4 text-red-500" />
           <span>Please enter a valid amount</span>
         </div>
-      )
-      return
+      );
+      return;
     }
 
     if (!fromCoin || !toCoin) {
@@ -270,8 +303,8 @@ export default function ConsumerPage() {
           <AlertCircle className="h-4 w-4 text-red-500" />
           <span>Please select both coins</span>
         </div>
-      )
-      return
+      );
+      return;
     }
 
     // Here you would typically make an API call to perform the swap
@@ -280,19 +313,24 @@ export default function ConsumerPage() {
         <CheckCircle2 className="h-4 w-4 text-green-500" />
         <span>Swapped {fromAmountValue} {fromCoin} to {toAmountValue} {toCoin}</span>
       </div>
-    )
-    setSwapping(false)
-    setFromCoin("")
-    setToCoin("")
-    setFromAmount("")
-    setToAmount("")
+    );
+    setSwapping(false);
+    setFromCoin("");
+    setToCoin("");
+    setFromAmount("");
+    setToAmount("");
+  }
+
+  const handleSwap = () => {
+    setSwapping(true)
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-blue-900">
+    <main className="min-h-screen bg-gradient-to-b from-purple-900 to-purple-800">
       <Header />
+      
+      {/* Header */}
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-white">Soloyalty Wallet</h1>
@@ -324,69 +362,87 @@ export default function ConsumerPage() {
             <Button
               variant="outline"
               className="bg-white text-purple-900 hover:bg-white/90"
-              onClick={() => setSwapping(true)}
+              onClick={handleSwap}
             >
               <Exchange className="mr-2 h-4 w-4" />
               Swap Coins
+            </Button>
+            <Button
+              variant="outline"
+              className="bg-white text-purple-900 hover:bg-white/90"
+              onClick={() => setRequestingPoints(true)}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Ask for Soloyalty
+            </Button>
+            <Button
+              variant="outline"
+              className="bg-white text-purple-900 hover:bg-white/90"
+              onClick={() => setDonating(true)}
+            >
+              <Gift className="mr-2 h-4 w-4" />
+              Donate directly
             </Button>
           </div>
         </div>
 
         {/* Promo Code Modal */}
         {claimingCode && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-white/20">
-              <h2 className="text-xl font-bold text-white mb-4">Claim Promo Code</h2>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="business" className="text-white/80">
-                    Select Business
-                  </Label>
-                  <Select
-                    value={selectedBusiness}
-                    onValueChange={setSelectedBusiness}
-                  >
-                    <SelectTrigger className="bg-white/10 text-white">
-                      <SelectValue placeholder="Select business" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {businesses.map((business) => (
-                        <SelectItem key={business.name} value={business.name}>
-                          {business.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="promoCode" className="text-white/80">
-                    Enter Promo Code
-                  </Label>
-                  <Input
-                    id="promoCode"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    className="bg-white/10 text-white"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setClaimingCode(false)
-                      setPromoCode("")
-                      setSelectedBusiness("")
-                    }}
-                    className="bg-white/10 text-white hover:bg-white/20"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleClaimPromoCode}
-                    className="bg-white text-purple-900 hover:bg-white/90"
-                  >
-                    Claim
-                  </Button>
+          <div className="fixed inset-0 bg-black/50 z-[9999]" onClick={() => setClaimingCode(false)}>
+            <div className="fixed inset-0 flex items-center justify-center p-4 z-[10000]">
+              <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-white/20">
+                <h2 className="text-xl font-bold text-white mb-4">Claim Promo Code</h2>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="business" className="text-white/80">
+                      Select Business
+                    </Label>
+                    <Select
+                      value={selectedBusiness}
+                      onValueChange={setSelectedBusiness}
+                    >
+                      <SelectTrigger className="bg-white/10 text-white relative z-[10001]">
+                        <SelectValue placeholder="Select business" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white/10 text-white absolute z-[10002]">
+                        {businesses.map((business) => (
+                          <SelectItem key={business.name} value={business.name}>
+                            {business.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="promoCode" className="text-white/80">
+                      Enter Promo Code
+                    </Label>
+                    <Input
+                      id="promoCode"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      className="bg-white/10 text-white"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setClaimingCode(false)
+                        setPromoCode("")
+                        setSelectedBusiness("")
+                      }}
+                      className="bg-white/10 text-white hover:bg-white/20"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleClaimPromoCode}
+                      className="bg-white text-purple-900 hover:bg-white/90"
+                    >
+                      Claim
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -395,61 +451,63 @@ export default function ConsumerPage() {
 
         {/* Donation Modal */}
         {donating && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-white/20">
-              <h2 className="text-xl font-bold text-white mb-4">Donate to Charity</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="charity">
-                    Select Charity
-                  </label>
-                  <Select
-                    value={selectedCharity}
-                    onValueChange={setSelectedCharity}
-                  >
-                    <SelectTrigger className="bg-white/10 text-white">
-                      <SelectValue placeholder="Select a charity" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {charities.map((charity) => (
-                        <SelectItem key={charity.id} value={charity.id}>
-                          {charity.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="donationAmount">
-                    Enter Donation Amount
-                  </label>
-                  <Input
-                    id="donationAmount"
-                    type="number"
-                    value={donationAmount}
-                    onChange={(e) => setDonationAmount(e.target.value)}
-                    className="bg-white/10 text-white"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setDonating(false)
-                      setDonationAmount("")
-                      setSelectedCharity("")
-                    }}
-                    className="bg-white/10 text-white hover:bg-white/20"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleDonate}
-                    className="bg-white text-purple-900 hover:bg-white/90"
-                    disabled={!selectedCharity}
-                  >
-                    Donate
-                  </Button>
+          <div className="fixed inset-0 bg-black/50 z-[9999]" onClick={() => setDonating(false)}>
+            <div className="fixed inset-0 flex items-center justify-center p-4 z-[10000]">
+              <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-white/20">
+                <h2 className="text-xl font-bold text-white mb-4">Donate to Charity</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="charity">
+                      Select Charity
+                    </label>
+                    <Select
+                      value={selectedCharity}
+                      onValueChange={setSelectedCharity}
+                    >
+                      <SelectTrigger className="bg-white/10 text-white relative z-[10001]">
+                        <SelectValue placeholder="Select a charity" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white/10 text-white absolute z-[10002]">
+                        {charities.map((charity) => (
+                          <SelectItem key={charity.id} value={charity.id}>
+                            {charity.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="donationAmount">
+                      Enter Donation Amount
+                    </label>
+                    <Input
+                      id="donationAmount"
+                      type="number"
+                      value={donationAmount}
+                      onChange={(e) => setDonationAmount(e.target.value)}
+                      className="bg-white/10 text-white"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setDonating(false)
+                        setDonationAmount("")
+                        setSelectedCharity("")
+                      }}
+                      className="bg-white/10 text-white hover:bg-white/20"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleDonate}
+                      className="bg-white text-purple-900 hover:bg-white/90"
+                      disabled={!selectedCharity}
+                    >
+                      Donate
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -458,97 +516,256 @@ export default function ConsumerPage() {
 
         {/* Coin Swap Modal */}
         {swapping && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
-            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-white/20">
-              <h2 className="text-xl font-bold text-white mb-4">Swap Coins</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="fromCoin">
-                    From Coin
-                  </label>
-                  <Select
-                    value={fromCoin}
-                    onValueChange={setFromCoin}
-                  >
-                    <SelectTrigger className="bg-white/10 text-white">
-                      <SelectValue placeholder="Select coin to swap from" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {businesses.map((business) => (
-                        <SelectItem key={business.name} value={business.name}>
-                          {business.name} Coin
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+          <div className="fixed inset-0 bg-black/50 z-[9999]" onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setSwapping(false)
+              setFromCoin("")
+              setToCoin("")
+              setFromAmount("")
+              setToAmount("")
+            }
+          }}>
+            <div className="fixed inset-0 flex items-center justify-center p-4">
+              <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-white/20 z-[10000]">
+                <h2 className="text-xl font-bold text-white mb-4">Swap Coins</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="fromCoin">
+                      From Coin
+                    </label>
+                    <Select
+                      value={fromCoin}
+                      onValueChange={setFromCoin}
+                    >
+                      <SelectTrigger className="bg-white/10 text-white relative z-[10001]">
+                        <SelectValue placeholder="Select coin to swap from" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white/10 text-white absolute z-[10002]">
+                        {businesses.map((business) => (
+                          <SelectItem key={business.name} value={business.name}>
+                            {business.name} Coin
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="fromAmount">
+                      Amount
+                    </label>
+                    <Input
+                      id="fromAmount"
+                      type="number"
+                      value={fromAmount}
+                      onChange={(e) => setFromAmount(e.target.value)}
+                      className="bg-white/10 text-white"
+                      placeholder="Enter amount"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="toCoin">
+                      To Coin
+                    </label>
+                    <Select
+                      value={toCoin}
+                      onValueChange={setToCoin}
+                    >
+                      <SelectTrigger className="bg-white/10 text-white relative z-[10001]">
+                        <SelectValue placeholder="Select coin to swap to" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white/10 text-white absolute z-[10002]">
+                        {businesses.map((business) => (
+                          <SelectItem key={business.name} value={business.name}>
+                            {business.name} Coin
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="toAmount">
+                      Amount
+                    </label>
+                    <Input
+                      id="toAmount"
+                      type="number"
+                      value={toAmount}
+                      readOnly
+                      className="bg-white/10 text-white cursor-not-allowed"
+                      placeholder="Calculated amount"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSwapping(false)
+                        setFromCoin("")
+                        setToCoin("")
+                        setFromAmount("")
+                        setToAmount("")
+                      }}
+                      className="bg-white/10 text-white hover:bg-white/20"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSwapCoins}
+                      className="bg-white text-purple-900 hover:bg-white/90"
+                      disabled={!fromCoin || !toCoin || !fromAmount || !toAmount}
+                    >
+                      Swap
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="fromAmount">
-                    Amount
-                  </label>
-                  <Input
-                    id="fromAmount"
-                    type="number"
-                    value={fromAmount}
-                    onChange={(e) => setFromAmount(e.target.value)}
-                    className="bg-white/10 text-white"
-                    placeholder="Enter amount"
-                  />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Request Points Modal */}
+        {requestingPoints && (
+          <div className="fixed inset-0 bg-black/50 z-[9999]" onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setRequestingPoints(false);
+              setSelectedBusiness("");
+              setRequestAmount("");
+            }
+          }}>
+            <div className="fixed inset-0 flex items-center justify-center p-4">
+              <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-white/20 z-[10000]">
+                <h2 className="text-xl font-bold text-white mb-4">Request Points</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="business">
+                      Business
+                    </label>
+                    <Select
+                      value={selectedBusiness}
+                      onValueChange={setSelectedBusiness}
+                    >
+                      <SelectTrigger className="bg-white/10 text-white relative z-[10001]">
+                        <SelectValue placeholder="Select business" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white/10 text-white absolute z-[10002]">
+                        {businesses.map((business) => (
+                          <SelectItem key={business.name} value={business.name}>
+                            {business.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="amount">
+                      Amount
+                    </label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      value={requestAmount}
+                      onChange={(e) => setRequestAmount(e.target.value)}
+                      className="bg-white/10 text-white"
+                      placeholder="Enter amount"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setRequestingPoints(false);
+                        setSelectedBusiness("");
+                        setRequestAmount("");
+                      }}
+                      className="bg-white/10 text-white hover:bg-white/20"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleRequestPoints}
+                      className="bg-white text-purple-900 hover:bg-white/90"
+                      disabled={!selectedBusiness || !requestAmount}
+                    >
+                      Request
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="toCoin">
-                    To Coin
-                  </label>
-                  <Select
-                    value={toCoin}
-                    onValueChange={setToCoin}
-                  >
-                    <SelectTrigger className="bg-white/10 text-white">
-                      <SelectValue placeholder="Select coin to swap to" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {businesses.map((business) => (
-                        <SelectItem key={business.name} value={business.name}>
-                          {business.name} Coin
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="toAmount">
-                    Amount
-                  </label>
-                  <Input
-                    id="toAmount"
-                    type="number"
-                    value={toAmount}
-                    readOnly
-                    className="bg-white/10 text-white cursor-not-allowed"
-                    placeholder="Calculated amount"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSwapping(false)
-                      setFromCoin("")
-                      setToCoin("")
-                      setFromAmount("")
-                      setToAmount("")
-                    }}
-                    className="bg-white/10 text-white hover:bg-white/20"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleSwapCoins}
-                    className="bg-white text-purple-900 hover:bg-white/90"
-                    disabled={!fromCoin || !toCoin || !fromAmount}
-                  >
-                    Swap
-                  </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Donate Modal */}
+        {donating && (
+          <div className="fixed inset-0 bg-black/50 z-[9999]" onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setDonating(false);
+              setSelectedDonationRequest(null);
+              setDonationAmount("");
+            }
+          }}>
+            <div className="fixed inset-0 flex items-center justify-center p-4">
+              <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-white/20 z-[10000]">
+                <h2 className="text-xl font-bold text-white mb-4">Donate Points</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="donationRequest">
+                      Select Donation Request
+                    </label>
+                    <Select
+                      value={selectedDonationRequest?.id || ""}
+                      onValueChange={(value) => {
+                        const request = donationRequests.find(r => r.id === value);
+                        setSelectedDonationRequest(request);
+                      }}
+                      className="z-[10003]"
+                      style={{ zIndex: 10003 }}
+                    >
+                      <SelectTrigger className="bg-white/10 text-white relative z-[10001]">
+                        <SelectValue placeholder="Select donation request" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white/10 text-white absolute z-[10002] w-80" style={{ zIndex: 10002 }}>
+                        {donationRequests.map((request) => (
+                          <SelectItem key={request.id} value={request.id}>
+                            {request.business} - {request.amount} points requested
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white/80" htmlFor="donationAmount">
+                      Donation Amount
+                    </label>
+                    <Input
+                      id="donationAmount"
+                      type="number"
+                      value={donationAmount}
+                      onChange={(e) => setDonationAmount(e.target.value)}
+                      className="bg-white/10 text-white"
+                      placeholder="Enter amount"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setDonating(false);
+                        setSelectedDonationRequest(null);
+                        setDonationAmount("");
+                      }}
+                      className="bg-white/10 text-white hover:bg-white/20"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleDonate}
+                      className="bg-white text-purple-900 hover:bg-white/90"
+                      disabled={!selectedDonationRequest || !donationAmount}
+                    >
+                      Donate
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
