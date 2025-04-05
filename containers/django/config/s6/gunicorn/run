@@ -1,0 +1,11 @@
+#!/command/execlineb -P
+with-contenv
+export PYTHONPATH "/app"
+/bin/uv
+run
+/app/.venv/bin/python3
+-m
+gunicorn
+transa.wsgi:application
+--bind
+0.0.0.0:8000

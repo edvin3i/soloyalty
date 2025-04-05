@@ -1,0 +1,13 @@
+#!/command/execlineb -P
+with-contenv
+export PYTHONPATH "/app"
+/bin/uv
+run
+/app/.venv/bin/python3
+-m
+daphne
+transa.asgi:application
+--bind
+0.0.0.0
+--port
+8001

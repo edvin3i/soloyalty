@@ -1,0 +1,129 @@
+
+volumes:
+        djstatic:
+                # name: djstatic
+                # driver: local
+                # driver_opts:
+                #         device: ${PWD}/data/djstatic
+                #         o: bind
+                #         type: none
+        djmedia:
+                # name: djmedia
+                # driver: local
+                # driver_opts:
+                #         device: ${PWD}/data/djmedia
+                #         o: bind
+                #         type: none
+        pgdata:
+                # name: pgdata
+                # driver: local
+                # driver_opts:
+                #         device: ${HOME}/data/pgdata
+                #         o: bind
+                #         type: none
+        frontend:
+                name: frontend
+                driver: local
+                driver_opts:
+                        device: ./srcs/frontend
+                        o: bind
+                        type: none     
+networks:
+  tnet:
+    name: tnet
+    driver: bridge
+
+services:
+  nginx:
+    container_name: nginx
+    build:
+      context: .
+      dockerfile: containers/nginx/Dockerfile
+    ports:
+      - "${NGINX_PORT_HTTPS}:443"
+    depends_on:
+      - django
+    volumes:
+      - frontend:/var/www/
+      - djstatic:/var/www/djstatic/
+      - djmedia:/var/www/djmedia/
+    networks:
+      - tnet
+    restart: always
+  django:
+    container_name: django
+    build: 
+      context: .
+      dockerfile: containers/django/Dockerfile
+    environment:
+        DJANGO_MODE: ${DJANGO_MODE}
+        DJ_DEBUG: ${DJ_DEBUG}
+        DOMAIN_NAME: ${DOMAIN_NAME}
+        DJ_SECRET_KEY: ${DJ_SECRET_KEY}
+        DB_HOST: ${DB_HOST}
+        DB_PORT: ${DB_PORT}
+        DB_NAME: ${DB_NAME}
+        DB_USER: ${DB_USER}
+        DB_PASSWORD: ${DB_PASSWORD}
+        DJANGO_SUPERUSER_NAME: ${DJ_ADMIN}
+        DJANGO_SUPERUSER_PASSWORD: ${DJ_ADM_PASS}
+        DJANGO_SUPERUSER_EMAIL: ${DJ_ADM_EMAIL}
+        DJ_REDIS_PASSWORD: ${DJ_REDIS_PASSWORD}
+        DJ_CACHE_KEY_SALT: ${DJ_CACHE_KEY_SALT}
+        OA_CLIENT_ID: ${OA_CLIENT_ID}
+        OA_SECRET: ${OA_SECRET}
+        OA_REDIR_URL: ${OA_REDIR_URL}
+        OA_POST_LOUT_REDIR_URL: ${OA_POST_LOUT_REDIR_URL}
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    depends_on:
+      - postgres
+    volumes:
+       - djstatic:/app/static/
+       - djmedia:/app/media/
+    networks:
+      - tnet
+    restart: always
+  postgres:
+    container_name: postgres
+    shm_size: 128mb
+    build: 
+      context: .
+      dockerfile: containers/postgres/Dockerfile
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+        - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data/
+    networks:
+      - tnet
+    restart: always
+  redis:
+    container_name: redis
+    build:
+      context: .
+      dockerfile: containers/redis/Dockerfile
+      args:
+        DJ_REDIS_PASSWORD: ${DJ_REDIS_PASSWORD}
+    ports:
+      - "6379"
+    networks:
+      - tnet
+    restart: always
+  adminer:
+    container_name: adminer
+    build:
+      context: .
+      dockerfile: containers/adminer/Dockerfile
+    depends_on:
+      - postgres
+    ports:
+      - "9090:9090"
+    networks:
+      - tnet
+    restart: always
+  
