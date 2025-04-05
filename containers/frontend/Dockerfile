@@ -13,6 +13,35 @@ RUN pnpm install
 # Copy source code
 COPY . .
 
+# Create directories for UI components
+RUN mkdir -p src/components/ui src/lib
+
+# Copy UI components if they exist
+RUN if [ -d "components/ui" ]; then \
+    cp -r components/ui/* src/components/ui/ || true; \
+fi
+
+# Create utils file if it doesn't exist
+RUN if [ ! -f "src/lib/utils.ts" ]; then \
+    echo 'import { clsx, type ClassValue } from "clsx";' > src/lib/utils.ts && \
+    echo 'import { twMerge } from "tailwind-merge";' >> src/lib/utils.ts && \
+    echo '' >> src/lib/utils.ts && \
+    echo 'export function cn(...inputs: ClassValue[]) {' >> src/lib/utils.ts && \
+    echo '  return twMerge(clsx(inputs));' >> src/lib/utils.ts && \
+    echo '}' >> src/lib/utils.ts; \
+fi
+
+# Fix lucide-react imports
+RUN if [ -f "app/consumer/page.tsx" ]; then \
+    sed -i 's/Exchange/ArrowLeftRight/g' app/consumer/page.tsx; \
+fi
+
+# Update tsconfig.json if it exists
+RUN if [ -f "tsconfig.json" ]; then \
+    grep -q '"@/*": "./*"' tsconfig.json || \
+    sed -i 's/"@\/*": ".\/src\/*"/"@\/*": ".\/src\/*",\n    "@\/*": ".\/*"/' tsconfig.json; \
+fi
+
 # Build the application
 RUN pnpm build
 
