@@ -144,6 +144,12 @@ export default function ConsumerPage() {
   const [requestingPoints, setRequestingPoints] = useState(false);
   const [requestAmount, setRequestAmount] = useState("");
   const [selectedDonationRequest, setSelectedDonationRequest] = useState(null);
+  const [showProfile, setShowProfile] = useState(false)
+  const [profileDetails, setProfileDetails] = useState({
+    name: "John Doe", // Replace with actual customer name from API
+    description: "Loyal customer since 2024", // Replace with actual description from API
+    email: "john.doe@example.com" // Replace with actual email from API
+  })
 
   const conversionRate = 0.7
 
@@ -325,10 +331,68 @@ export default function ConsumerPage() {
     setSwapping(true)
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('customerToken')
+    window.location.href = '/login-customer'
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-purple-900 to-purple-800">
       <Header />
       
+      {/* Profile Button */}
+      <div className="fixed top-4 right-4 z-50">
+        <Button
+          variant="outline"
+          className="bg-white/10 text-white hover:bg-white/20"
+          onClick={() => setShowProfile(!showProfile)}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-user mr-2 h-4 w-4"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          Profile
+        </Button>
+
+        {showProfile && (
+          <div className="fixed inset-0 bg-black/50 z-[9999]" onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowProfile(false)
+            }
+          }}>
+            <div className="fixed top-4 right-4 z-[10000]">
+              <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-white/20 w-80">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-user h-6 w-6"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-white">{profileDetails.name}</h3>
+                    <p className="text-sm text-white/80">{profileDetails.description}</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profileDetails.email}
+                      readOnly
+                      className="bg-white/10 text-white"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    className="w-full bg-white/10 text-white hover:bg-white/20"
+                  >
+                    Logout
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Header */}
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">

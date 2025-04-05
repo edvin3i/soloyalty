@@ -35,6 +35,12 @@ export default function BusinessPage() {
   const [programName, setProgramName] = useState("")
   const [programConditions, setProgramConditions] = useState("")
   const [programRate, setProgramRate] = useState("")
+  const [showProfile, setShowProfile] = useState(false)
+  const [profileDetails, setProfileDetails] = useState({
+    name: "Café Delight", // Replace with actual business name from API
+    description: "A cozy coffee shop in the heart of the city. We serve the finest coffee and pastries.", // Replace with actual description from API
+    email: "info@cafedelight.com" // Replace with actual email from API
+  })
 
   const handleCreateProgram = async () => {
     try {
@@ -104,8 +110,66 @@ export default function BusinessPage() {
     }
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('businessToken')
+    window.location.href = '/login-business'
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-900 to-purple-800">
+      {/* Profile Button */}
+      <div className="fixed top-4 right-4 z-[10001]">
+        <Button
+          variant="outline"
+          className="bg-white/10 text-white hover:bg-white/20"
+          onClick={() => setShowProfile(!showProfile)}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-user mr-2 h-4 w-4"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          Profile
+        </Button>
+
+        {showProfile && (
+          <div className="fixed inset-0 bg-black/50 z-[10000]" onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowProfile(false)
+            }
+          }}>
+            <div className="fixed top-4 right-4 z-[10001]">
+              <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-white/20 w-80">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-building-2 h-6 w-6"><path d="M14 2v6a2 2 0 0 0 2 2h2m-2-6H6a2 2 0 0 0-2 2v6m4-6v6a2 2 0 0 0 2 2h2M6 8h12"></path><path d="M12 12h.01"></path></svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-white">{profileDetails.name}</h3>
+                    <p className="text-sm text-white/80">{profileDetails.description}</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profileDetails.email}
+                      readOnly
+                      className="bg-white/10 text-white"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    className="w-full bg-white/10 text-white hover:bg-white/20"
+                  >
+                    Logout
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-gradient-to-b from-purple-900 to-purple-800/90 backdrop-blur-sm border-b border-white/10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
