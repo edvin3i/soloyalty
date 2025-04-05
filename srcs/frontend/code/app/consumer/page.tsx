@@ -33,7 +33,7 @@ declare module 'lucide-react' {
 }
 
 declare module 'react' {
-  interface ReactNode {}
+  interface ReactNode { }
 }
 
 const businesses = [
@@ -292,7 +292,7 @@ export default function ConsumerPage() {
   const handleSwapCoins = () => {
     const fromAmountValue = parseFloat(fromAmount)
     const toAmountValue = parseFloat(toAmount)
-    
+
     if (isNaN(fromAmountValue) || fromAmountValue <= 0) {
       toast.error(
         <div className="flex items-center gap-2">
@@ -339,7 +339,7 @@ export default function ConsumerPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-purple-900 to-purple-800">
       <Header />
-      
+
       {/* Profile Button */}
       <div className="fixed top-4 right-4 z-50">
         <Button
@@ -406,7 +406,7 @@ export default function ConsumerPage() {
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="hidden md:flex gap-2">
             <Button
               variant="outline"
               className="bg-white text-purple-900 hover:bg-white/90"
@@ -437,7 +437,7 @@ export default function ConsumerPage() {
               onClick={() => setRequestingPoints(true)}
             >
               <Plus className="mr-2 h-4 w-4" />
-              Ask for Soloyalty
+              Ask for Soloyls
             </Button>
             <Button
               variant="outline"
