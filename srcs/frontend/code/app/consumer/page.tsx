@@ -849,8 +849,12 @@ export default function ConsumerPage() {
                     {business.points} SLC
                   </CardDescription>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
-                  <span className="text-white/80 text-xl">{business.logo[0]}</span>
+                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/djmedia/soloyalty_assets/bakyt_1.jpg"
+                    alt={business.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </CardHeader>
               <CardContent>
