@@ -13,4 +13,7 @@ dependencies = [
     "black>=25.1.0",
     "requests>=2.32.3",
     "gunicorn>=23.0.0",
+    "psycopg>=3.2.6",
+    "psycopg2-binary>=2.9.10",
+    "djangorestframework-simplejwt>=5.5.0",
 ]

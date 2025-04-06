@@ -106,16 +106,16 @@ services:
     networks:
       - tnet
     restart: always
-  adminer:
-    container_name: adminer
-    build:
-      context: .
-      dockerfile: containers/adminer/Dockerfile
-    depends_on:
-      - postgres
-    ports:
-      - "9090:9090"
-    networks:
-      - tnet
-    restart: always
+  # adminer:
+  #   container_name: adminer
+  #   build:
+  #     context: .
+  #     dockerfile: containers/adminer/Dockerfile
+  #   depends_on:
+  #     - postgres
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - tnet
+  #   restart: always
   
