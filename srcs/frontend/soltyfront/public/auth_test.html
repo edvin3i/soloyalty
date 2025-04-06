@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Полный флоу авторизации через Privy</title>
+</head>
+<body>
+  <h1>Авторизация через Privy</h1>
+  
+  <!-- Кнопка для начала авторизации через Privy -->
+  <div id="login-container" style="display:none;">
+    <button id="privyLoginBtn">Войти через Privy</button>
+  </div>
+  
+  <!-- Элементы для работы после авторизации -->
+  <div id="auth-container" style="display:none;">
+    <p>Авторизация прошла успешно!</p>
+    <button id="refreshBtn">Обновить access token</button>
+    <button id="getWalletBtn">Получить данные кошелька (Privy API)</button>
+    <pre id="result" style="background:#f0f0f0; padding:10px; margin-top:20px;"></pre>
+  </div>
+  
+  <script>
+    const apiBaseUrl = "https://localhost/api";
+    const privyWalletsUrl = "https://api.privy.io/v1/wallets";
+    const resultEl = document.getElementById('result');
+
+    // Функция для вывода результата в блоке <pre>
+    function showResult(data) {
+      resultEl.textContent = JSON.stringify(data, null, 2);
+    }
+
+    // Функция для получения параметра из URL
+    function getParameterByName(name, url = window.location.href) {
+      name = name.replace(/[\[\]]/g, '\\$&');
+      const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+            results = regex.exec(url);
+      if (!results) return null;
+      if (!results[2]) return '';
+      return decodeURIComponent(results[2].replace(/\+/g, ' '));
+    }
+
+    // Функция авторизации через Privy backend
+    async function privyLogin(privyToken) {
+      try {
+        const response = await fetch(`${apiBaseUrl}/auth/privy-login/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ privy_token: privyToken })
+        });
+        if (!response.ok) {
+          throw new Error("Ошибка авторизации: " + response.statusText);
+        }
+        const data = await response.json();
+        // Сохраняем полученные JWT токены в localStorage
+        localStorage.setItem("access_token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);
+        showResult({ message: "Авторизация успешна", tokens: data });
+        document.getElementById("auth-container").style.display = "block";
+      } catch (err) {
+        showResult({ error: err.message });
+      }
+    }
+
+    // Функция обновления access token через refresh token
+    async function refreshAccessToken() {
+      const refreshToken = localStorage.getItem("refresh_token");
+      if (!refreshToken) {
+        showResult({ error: "Нет refresh token в хранилище" });
+        return;
+      }
+      try {
+        const response = await fetch(`${apiBaseUrl}/token/refresh/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ refresh: refreshToken })
+        });
+        if (!response.ok) {
+          throw new Error("Ошибка обновления токена: " + response.statusText);
+        }
+        const data = await response.json();
+        localStorage.setItem("access_token", data.access);
+        showResult({ message: "Access token обновлён", tokens: data });
+      } catch (err) {
+        showResult({ error: err.message });
+      }
+    }
+
+    // Функция запроса данных кошелька через Privy API
+    async function getWalletData() {
+      const accessToken = localStorage.getItem("access_token");
+      if (!accessToken) {
+        showResult({ error: "Нет access token. Авторизуйтесь сначала." });
+        return;
+      }
+      try {
+        const response = await fetch(privyWalletsUrl, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error("Ошибка запроса кошелька: " + response.statusText);
+        }
+        const data = await response.json();
+        showResult({ message: "Данные кошелька получены", wallets: data });
+      } catch (err) {
+        showResult({ error: err.message });
+      }
+    }
+
+    // Функция для редиректа на страницу авторизации Privy
+    function redirectToPrivyAuth() {
+      // Замените YOUR_CLIENT_ID и YOUR_CALLBACK_URL на актуальные значения!
+      const clientId = "cm94qbsau0099l10kurg6yet2";
+      const callbackUrl = encodeURIComponent("https://localhost/api/auth/fprivy/callback/");
+      // Пример URL для авторизации (проверьте актуальный URL в документации Privy)
+      const privyAuthUrl = `https://auth.privy.io/?client_id=${clientId}&redirect_uri=${callbackUrl}&response_type=token`;
+      window.location.href = privyAuthUrl;
+    }
+
+    // Обработчик клика для кнопки "Войти через Privy"
+    document.getElementById("privyLoginBtn").addEventListener("click", redirectToPrivyAuth);
+
+    // Обработчик для обновления токена
+    document.getElementById("refreshBtn").addEventListener("click", refreshAccessToken);
+
+    // Обработчик для получения данных кошелька
+    document.getElementById("getWalletBtn").addEventListener("click", getWalletData);
+
+    // Основной флоу: если в URL есть параметр privy_token, пробуем авторизоваться
+    window.onload = () => {
+      const privyToken = getParameterByName("privy_token");
+      if (privyToken) {
+        // Если токен найден, очищаем URL и запускаем авторизацию
+        window.history.replaceState({}, document.title, window.location.pathname);
+        privyLogin(privyToken);
+      } else {
+        // Если токен отсутствует, показываем кнопку для редиректа на Privy
+        document.getElementById("login-container").style.display = "block";
+      }
+    };
+  </script>
+</body>
+</html>
