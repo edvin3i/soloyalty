@@ -1,5 +1,21 @@
 #!/bin/sh
 
+# Debug information
+echo "=== DJANGO CONTAINER STARTUP DIAGNOSTICS ==="
+echo "Current directory: $(pwd)"
+echo "Directory listing:"
+ls -la
+echo "Python path: $PYTHONPATH"
+python -c "import sys; print(\"sys.path:\", sys.path)"
+
+# Test for Django and project imports
+echo "Testing imports..."
+python -c "import django; print(f\"Django version: {django.__version__}\")"
+python -c "from importlib import util; print(\"soltyback package exists:\", util.find_spec(\"soltyback\") is not None)"
+
+# Ensure correct Python path
+export PYTHONPATH=$PYTHONPATH:/app
+
 echo "⚡️ Waiting for database..."
 until nc -z -v -w30 $DB_HOST $DB_PORT
 do
@@ -9,14 +25,14 @@ done
 echo "✅ Database is up!"
 
 echo "⚡️ Make migrations..."
-uv run python manage.py makemigrations uprofiles
-uv run python manage.py makemigrations
+python manage.py makemigrations uprofiles
+python manage.py makemigrations
 
 echo "⚡️ Applying migrations..."
-uv run python manage.py migrate --noinput
+python manage.py migrate --noinput
 
 # Check if migrations applied correctly
-MIGRATION_CHECK=$(uv run python manage.py showmigrations uprofiles | grep '\[ \]')
+MIGRATION_CHECK=$(python manage.py showmigrations uprofiles | grep '\[ \]')
 if [ ! -z "$MIGRATION_CHECK" ]; then
   echo "❌ Warning: Some uprofiles migrations may not have applied correctly"
   echo "$MIGRATION_CHECK"
@@ -25,7 +41,7 @@ else
 fi
 
 echo "⚡️ Creating Django SuperUser..."
-uv run python manage.py shell <<EOF
+python manage.py shell <<EOF
 from django.contrib.auth import get_user_model
 User = get_user_model()
 if not User.objects.filter(username="$DJANGO_SUPERUSER_NAME").exists():
@@ -34,10 +50,9 @@ if not User.objects.filter(username="$DJANGO_SUPERUSER_NAME").exists():
 else:
     print("✅ Superuser already exists.")
 EOF
-# uv run python manage.py createsuperuser --no-input
 
-echo "  Collecting static files..."
-uv run python manage.py collectstatic --no-input
+echo "⚡️ Collecting static files..."
+python manage.py collectstatic --no-input
 
-echo "🚀 Starting Gunicorn..."
+echo "🚀 Starting Gunicorn with command: $@"
 exec "$@"
