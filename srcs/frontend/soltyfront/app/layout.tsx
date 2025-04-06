@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Soloyal',
+  title: 'Soloyalty',
   description: 'Solana blockchain based loyalty platform',
-  generator: 'Soloyal.io',
+  generator: 'Soloyalty.io',
 }
 
 export default function RootLayout({
