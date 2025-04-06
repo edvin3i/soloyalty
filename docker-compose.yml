@@ -21,19 +21,21 @@ volumes:
                 #         device: ${HOME}/data/pgdata
                 #         o: bind
                 #         type: none
-        frontend:
-                name: frontend
-                driver: local
-                driver_opts:
-                        device: ./srcs/frontend
-                        o: bind
-                        type: none     
+        # frontend:
+        #         name: frontend
+        #         driver: local
+                # driver_opts:
+                #         device: ./srcs/frontend
+                #         o: bind
+                #         type: none     
 networks:
   tnet:
     name: tnet
     driver: bridge
 
 services:
+
+
   nginx:
     container_name: nginx
     build:
@@ -44,7 +46,7 @@ services:
     depends_on:
       - django
     volumes:
-      - frontend:/var/www/
+      # - frontend:/var/www/
       - djstatic:/var/www/djstatic/
       - djmedia:/var/www/djmedia/
     networks:
@@ -101,18 +103,6 @@ services:
         - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data/
-    networks:
-      - tnet
-    restart: always
-  redis:
-    container_name: redis
-    build:
-      context: .
-      dockerfile: containers/redis/Dockerfile
-      args:
-        DJ_REDIS_PASSWORD: ${DJ_REDIS_PASSWORD}
-    ports:
-      - "6379"
     networks:
       - tnet
     restart: always
