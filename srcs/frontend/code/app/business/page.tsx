@@ -22,6 +22,13 @@ const programs = [
     conditions: "Get 100 points on your birthday",
     rate: 100,
     status: "inactive"
+  },
+  {
+    id: 3,
+    name: "Bonus for Referrals",
+    conditions: "Get 75 points for every invited friend",
+    rate: 75,
+    status: "active"
   }
 ]
 
@@ -174,7 +181,7 @@ export default function BusinessPage() {
       <div className="sticky top-0 z-50 bg-gradient-to-b from-purple-900 to-purple-800/90 backdrop-blur-sm border-b border-white/10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-3xl font-bold text-white">Business Programs</h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 mr-[5%]">
             <span className="text-xl font-semibold text-white">{companyName}</span>
             <span className="text-xl font-medium text-white/80">
               Balance: {tokenBalance} SoLoyal Coins
@@ -249,7 +256,7 @@ export default function BusinessPage() {
                 <h2 className="text-xl font-bold text-white mb-4">Create New Program</h2>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="programName">Program Name</Label>
+                    <Label htmlFor="programName" className="text-white">Program Name</Label>
                     <Input
                       id="programName"
                       value={programName}
@@ -259,7 +266,7 @@ export default function BusinessPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="programConditions">Program Conditions</Label>
+                    <Label htmlFor="programConditions" className="text-white">Program Conditions</Label>
                     <Textarea
                       id="programConditions"
                       value={programConditions}
@@ -270,7 +277,7 @@ export default function BusinessPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="programRate">Points Rate</Label>
+                    <Label htmlFor="programRate" className="text-white">Points Rate</Label>
                     <Input
                       id="programRate"
                       type="number"
